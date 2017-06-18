@@ -127,7 +127,7 @@
                 .attr("class", "node forlegend")
                 .attr("r", 10)
                 .attr("fill", function (d) {
-                    return color(d.bundesland);
+                    return color(d.folder);
                 })
                 .attr("_legend", function (d) {
                     return d.name;
@@ -208,7 +208,7 @@
                 _nodes.push({
                     kennzeichen: filename,
                     name: relPath,
-                    bundesland: (pathParts[0] == filename ? "." : pathParts[0])
+                    folder: (pathParts[0] == filename ? "." : pathParts[0])
                 })
             }
         }
