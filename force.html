@@ -175,7 +175,7 @@
 
         function startForce(data) {
             simulation
-                .nodes(data.cities)
+                .nodes(data.nodes)
                 .on("tick", ticked);
 
             simulation.force("link")
@@ -252,7 +252,7 @@
 
             _getCoronaRecursive(index, relPath, maxDepth, _nodes, _links, []);
             return {
-                cities: _nodes,
+                nodes: _nodes,
                 links: _links
             }
         }
@@ -261,8 +261,8 @@
 
         d3.json('data/index.json', function (error, data) {
             var corona = getCorona(data, path, depth);
-            drawNodes(corona.cities);
-            drawTexts(corona.cities);
+            drawNodes(corona.nodes);
+            drawTexts(corona.nodes);
             drawLinks(corona.links);
             startForce(corona);
         });
