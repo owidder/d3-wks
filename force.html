@@ -39,15 +39,25 @@
 <script>
 
     var SUFFIX = ".utf8";
+    var util = bottle.container.util;
 
-    var path = bottle.container.util.param("path", "");
+    var path = util.param("path", "");
 
     var width = window.innerWidth;
     var height = window.innerHeight;
 
     var svg = d3.select("#force").append("svg")
-            .attr("width", width*2)
-            .attr("height", height*2);
+        .attr("class", "force")
+        .attr("width", width * 2)
+        .attr("height", height * 2)
+        .on("click", function () {
+            switchLegend();
+        })
+        .on("mousemove", function () {
+            var evt = d3.mouse(this);
+            mouseMoved(evt[0], evt[1]);
+        })
+        .on("mouseout", hideLegend);
 
     var gLinks = svg.append("g");
     var gTexts = svg.append("g");
@@ -56,13 +66,166 @@
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
     var simulation = d3.forceSimulation()
-            .force("link", d3.forceLink().id(function (d) {
-                return d.name;
-            }).distance(function (d) {
-                return -d.count;
-            }))
-            .force("charge", d3.forceManyBody().strength(-60))
-            .force("center", d3.forceCenter(width / 2, height / 2));
+        .force("link", d3.forceLink().id(function (d) {
+            return d.name;
+        }).distance(function (d) {
+            return -d.count;
+        }))
+        .force("charge", d3.forceManyBody().strength(-60))
+        .force("center", d3.forceCenter(width / 2, height / 2));
+
+    function getSvgBoundingRectOfElement(selector) {
+        var element = document.querySelector(selector);
+        if (element != null) {
+            return element.getBoundingClientRect();
+        }
+        else {
+            return {
+                top: 0,
+                left: 0,
+                bottom: 0,
+                right: 0
+            };
+        }
+
+        return boundingRect;
+    }
+
+    function adaptPositionToElement(x, y, selector) {
+        var svgBoundingRect = getSvgBoundingRectOfElement(selector);
+        var xAdapted = x + svgBoundingRect.left;
+        var yAdapted = y + svgBoundingRect.top;
+
+        return {
+            x: xAdapted,
+            y: yAdapted
+        }
+    }
+
+    function adaptPositionToSvg(x, y) {
+        return adaptPositionToElement(x, y, "svg.force")
+    }
+
+    function getNearbyBubblesForlegends(x, y) {
+        var adapted = adaptPositionToSvg(x, y);
+        var forlegends = document.querySelectorAll(".forlegend");
+        var i, forlegend, boundingRect;
+        var nearbyBubblesForlegends = [];
+        var radius = 10;
+        for (i = 0; i < forlegends.length; i++) {
+            forlegend = forlegends[i];
+            boundingRect = forlegend.getBoundingClientRect();
+            if (adapted.x > boundingRect.left - radius && adapted.x < boundingRect.right + radius &&
+                adapted.y > boundingRect.top - radius && adapted.y < boundingRect.bottom + radius) {
+                nearbyBubblesForlegends.push(forlegend);
+            }
+        }
+
+        return nearbyBubblesForlegends;
+    }
+
+    function createLegendList(elementList) {
+        var legendList = [];
+        var path;
+        var legendStr;
+        var i, svgElement;
+        for (i = 0; i < elementList.length; i++) {
+            svgElement = elementList[i];
+            legendStr = svgElement.getAttribute("_legend");
+            if (!_.isEmpty(legendStr)) {
+                legendList.push(legendStr)
+            }
+        }
+
+        return legendList;
+    }
+
+    function switchLegend() {
+        if (isLegendShown()) {
+            hideLegend();
+        }
+        else {
+            showLegend();
+        }
+    }
+
+    function isLegendShown() {
+        return svg.select("g.legend.on").size() > 0;
+    }
+
+    function hideLegend() {
+        var legend = svg.select("g.legend");
+        legend.classed("on", false);
+        legend.classed("off", true);
+    }
+
+    function showLegend() {
+        var legend = svg.select("g.legend");
+        legend.classed("off", false);
+        legend.classed("on", true);
+    }
+
+    function appendLegend() {
+        var legend = svg.append("g")
+            .attr("class", "legend off");
+
+        legend.append("rect")
+            .attr("class", "legend")
+            .attr("fill", "grey")
+            .attr("width", 100)
+            .attr("height", 100)
+            .attr("stroke", "white")
+            .attr("opacity", 0.8);
+
+        legend.append("text")
+            .attr("class", "legend")
+            .attr("fill", "white");
+    }
+
+    function updateLegend(legendList) {
+        var maxLength = util.getLongestString(legendList);
+
+        var legendRect = svg.select("rect.legend");
+        legendRect.transition()
+            .attr("height", (legendList.length + 2) + "em")
+            .attr("width", (maxLength + 1) * (2 / 3) + "em");
+
+        var legendText = svg.select("text.legend");
+        var legendData = legendText.selectAll(".textline")
+            .data(legendList);
+
+        legendData.enter()
+            .append("tspan")
+            .attr("font-size", "0.7em")
+            .attr("class", "textline")
+            .attr("x", "0.3em")
+            .attr("y", function (d, i) {
+                return (i + 1) * 10;
+            });
+
+        legendText.selectAll(".textline")
+            .text(function (d) {
+                return d;
+            });
+
+        legendData.exit().remove();
+
+        if (legendList.length == 0) {
+            hideLegend();
+        }
+        else {
+            showLegend();
+        }
+    }
+
+    function mouseMoved(x, y) {
+        var nearbyBubblesForlegends = getNearbyBubblesForlegends(x, y);
+        var legendList = createLegendList(nearbyBubblesForlegends);
+        updateLegend(legendList);
+
+        svg.select("g.legend")
+            .attr("transform", "translate(" + (x + 10) + "," + (y + 10) + ")");
+    }
 
     function drawForce() {
         ///////////////////////////////////
@@ -71,88 +234,87 @@
 
         function drawLinks(links) {
             var selectionWithData = gLinks.selectAll("line.travel")
-                    .data(links, function (d) {
-                        return d.source + "#" + d.target;
-                    });
+                .data(links, function (d) {
+                    return d.source + "#" + d.target;
+                });
 
             selectionWithData.enter()
-                    .append("line")
-                    .attr("class", "travel")
-                    .style("stroke-width", function(d) {
-                        return Math.sqrt(d.count / 50)
-                    });
+                .append("line")
+                .attr("class", "travel")
+                .style("stroke-width", function (d) {
+                    return Math.sqrt(d.count / 50)
+                });
 
             selectionWithData.exit().remove();
         }
 
         function drawTexts(nodes) {
             var selectionWithData = gTexts.selectAll("text.city")
-                    .data(nodes, function (d) {
-                        return d.name;
-                    });
+                .data(nodes, function (d) {
+                    return d.name;
+                });
 
             selectionWithData.enter()
-                    .append("text")
-                    .attr("class", "city")
-                    .text(function (d) {
-                        return d.kennzeichen;
-                    });
+                .append("text")
+                .attr("class", "city")
+                .text(function (d) {
+                    return d.kennzeichen;
+                });
 
             selectionWithData.exit().remove();
         }
 
         function drawNodes(nodes) {
             var selectionWithData = gNodes.selectAll("circle.city")
-                    .data(nodes, function (d) {
-                        return d.name;
-                    });
+                .data(nodes, function (d) {
+                    return d.name;
+                });
 
             selectionWithData.enter()
-                    .append("circle")
-                    .attr("class", "city")
-                    .attr("r", 10)
-                    .attr("fill", function(d) {
-                        return color(d.bundesland);
-                    })
-                    .call(stuff.drag)
-                    .append("title")
-                    .text(function (d) {
-                        return d.name;
-                    });
+                .append("circle")
+                .attr("class", "city forlegend")
+                .attr("r", 10)
+                .attr("fill", function (d) {
+                    return color(d.bundesland);
+                })
+                .attr("_legend", function (d) {
+                    return d.name;
+                })
+                .call(stuff.drag);
 
             selectionWithData.exit().remove();
         }
 
         function ticked() {
             gNodes.selectAll("circle.city")
-                    .attr("cx", function(d) {
-                        return d.x;
-                    })
-                    .attr("cy", function (d) {
-                        return d.y;
-                    });
+                .attr("cx", function (d) {
+                    return d.x;
+                })
+                .attr("cy", function (d) {
+                    return d.y;
+                });
 
             gTexts.selectAll("text.city")
-                    .attr("x", function(d) {
-                        return d.x;
-                    })
-                    .attr("y", function (d) {
-                        return d.y;
-                    });
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                });
 
             gLinks.selectAll("line.travel")
-                    .attr("x1", function (d) {
-                        return d.source.x;
-                    })
-                    .attr("y1", function (d) {
-                        return d.source.y;
-                    })
-                    .attr("x2", function (d) {
-                        return d.target.x;
-                    })
-                    .attr("y2", function (d) {
-                        return d.target.y;
-                    })
+                .attr("x1", function (d) {
+                    return d.source.x;
+                })
+                .attr("y1", function (d) {
+                    return d.source.y;
+                })
+                .attr("x2", function (d) {
+                    return d.target.x;
+                })
+                .attr("y2", function (d) {
+                    return d.target.y;
+                })
         }
 
         ///////////////////////////////////
@@ -161,11 +323,11 @@
 
         function startForce(data) {
             simulation
-                    .nodes(data.cities)
-                    .on("tick", ticked);
+                .nodes(data.cities)
+                .on("tick", ticked);
 
             simulation.force("link")
-                    .links(data.links);
+                .links(data.links);
 
             simulation.alpha(1).restart();
         }
@@ -187,9 +349,9 @@
         }
 
         function addNode(relPath, _nodes) {
-            if(_.isEmpty(findNode(relPath, _nodes))) {
+            if (_.isEmpty(findNode(relPath, _nodes))) {
                 var pathParts = relPath.split("/");
-                var indexOfLastPart = pathParts.length-1;
+                var indexOfLastPart = pathParts.length - 1;
                 var filename = pathParts[indexOfLastPart];
                 _nodes.push({
                     kennzeichen: filename,
@@ -200,11 +362,11 @@
         }
 
         function addLink(fromRelPath, toRelPath, value, _links) {
-            if(_.isEmpty(findLink(fromRelPath, toRelPath, _links))) {
+            if (_.isEmpty(findLink(fromRelPath, toRelPath, _links))) {
                 _links.push({
                     source: fromRelPath,
                     target: toRelPath,
-                    count: value*100
+                    count: value * 100
                 });
             }
         }
@@ -214,14 +376,14 @@
 
             addNode(fromRelPath, _nodes);
 
-            if(currentDepth > 0) {
+            if (currentDepth > 0) {
                 var entry = index[fromRelPath];
-                if(entry != null) {
+                if (entry != null) {
                     _.forOwn(entry, function (value, toRelPath) {
                         var toRelPathWithoutSuffix = removeSuffix(toRelPath);
                         addLink(fromRelPath, toRelPathWithoutSuffix, value, _links);
-                        if(_processed.indexOf(toRelPathWithoutSuffix) < 0) {
-                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth-1, _nodes, _links, _processed);
+                        if (_processed.indexOf(toRelPathWithoutSuffix) < 0) {
+                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth - 1, _nodes, _links, _processed);
                         }
                     })
                 }
@@ -229,7 +391,7 @@
         }
 
         function getCorona(index, relPath, maxDepth) {
-            if(_.isEmpty(index)) {
+            if (_.isEmpty(index)) {
                 readIndex();
             }
 
@@ -254,6 +416,7 @@
         });
     }
 
+    appendLegend();
     drawForce(path);
 
 </script>
