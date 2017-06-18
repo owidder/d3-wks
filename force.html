@@ -31,33 +31,38 @@
 
 <script src="js/util/simplePromise.js"></script>
 <script src="js/util/util.js"></script>
+<script src="js/legend.js"></script>
 
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="js/util/stuff.js"></script>
 <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.css"
       media="screen,projection"/>
+<link rel="stylesheet" type="text/css" href="css/style.css">
 <script>
 
     var SUFFIX = ".utf8";
     var util = bottle.container.util;
+    var Legend = bottle.container.Legend;
 
     var path = util.param("path", "");
 
     var width = window.innerWidth;
     var height = window.innerHeight;
 
+    var legend = new Legend("svg.force");
+
     var svg = d3.select("#force").append("svg")
         .attr("class", "force")
         .attr("width", width * 2)
         .attr("height", height * 2)
         .on("click", function () {
-            switchLegend();
+            legend.switchLegend();
         })
         .on("mousemove", function () {
             var evt = d3.mouse(this);
-            mouseMoved(evt[0], evt[1]);
+            legend.mouseMoved(evt[0], evt[1]);
         })
-        .on("mouseout", hideLegend);
+        .on("mouseout", legend.hideLegend);
 
     var gLinks = svg.append("g");
     var gTexts = svg.append("g");
@@ -416,7 +421,7 @@
         });
     }
 
-    appendLegend();
+    legend.appendLegend();
     drawForce(path);
 
 </script>
