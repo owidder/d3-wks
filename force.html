@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+
+        line.travel {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        circle.city {
+            stroke: #fff;
+            stroke-width: 1.5px;
+            opacity: 0.2;
+        }
+
+        text.city {
+            font-size: .7em;
+        }
+
+    </style>
+</head>
+<body>
+<input id="quantile-slider" type="range" min="0" max="10" onchange="drawForce()"/>
+<div id="force"></div>
+<script src="bower_components/bottlejs/dist/bottle.js"></script>
+<script>var bottle = new Bottle();</script>
+<script src="bower_components/lodash/dist/lodash.js"></script>
+<script src="bower_components/crypto-js/crypto-js.js"></script>
+
+<script src="js/util/simplePromise.js"></script>
+<script src="js/util/util.js"></script>
+
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="js/util/stuff.js"></script>
+<link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.css"
+      media="screen,projection"/>
+<script>
+
+    var SUFFIX = ".utf8";
+
+    var path = bottle.container.util.param("path", "");
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var svg = d3.select("#force").append("svg")
+            .attr("width", width*2)
+            .attr("height", height*2);
+
+    var gLinks = svg.append("g");
+    var gTexts = svg.append("g");
+    var gNodes = svg.append("g");
+
+    var color = d3.scaleOrdinal(d3.schemeCategory20);
+
+    var simulation = d3.forceSimulation()
+            .force("link", d3.forceLink().id(function (d) {
+                return d.name;
+            }).distance(function (d) {
+                return -d.count;
+            }))
+            .force("charge", d3.forceManyBody().strength(-60))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+    function drawForce() {
+        ///////////////////////////////////
+        // WKS Start
+        ///////////////////////////////////
+
+        function drawLinks(links) {
+            var selectionWithData = gLinks.selectAll("line.travel")
+                    .data(links, function (d) {
+                        return d.source + "#" + d.target;
+                    });
+
+            selectionWithData.enter()
+                    .append("line")
+                    .attr("class", "travel")
+                    .style("stroke-width", function(d) {
+                        return Math.sqrt(d.count / 50)
+                    });
+
+            selectionWithData.exit().remove();
+        }
+
+        function drawTexts(nodes) {
+            var selectionWithData = gTexts.selectAll("text.city")
+                    .data(nodes, function (d) {
+                        return d.name;
+                    });
+
+            selectionWithData.enter()
+                    .append("text")
+                    .attr("class", "city")
+                    .text(function (d) {
+                        return d.kennzeichen;
+                    });
+
+            selectionWithData.exit().remove();
+        }
+
+        function drawNodes(nodes) {
+            var selectionWithData = gNodes.selectAll("circle.city")
+                    .data(nodes, function (d) {
+                        return d.name;
+                    });
+
+            selectionWithData.enter()
+                    .append("circle")
+                    .attr("class", "city")
+                    .attr("r", 10)
+                    .attr("fill", function(d) {
+                        return color(d.bundesland);
+                    })
+                    .call(stuff.drag)
+                    .append("title")
+                    .text(function (d) {
+                        return d.name;
+                    });
+
+            selectionWithData.exit().remove();
+        }
+
+        function ticked() {
+            gNodes.selectAll("circle.city")
+                    .attr("cx", function(d) {
+                        return d.x;
+                    })
+                    .attr("cy", function (d) {
+                        return d.y;
+                    });
+
+            gTexts.selectAll("text.city")
+                    .attr("x", function(d) {
+                        return d.x;
+                    })
+                    .attr("y", function (d) {
+                        return d.y;
+                    });
+
+            gLinks.selectAll("line.travel")
+                    .attr("x1", function (d) {
+                        return d.source.x;
+                    })
+                    .attr("y1", function (d) {
+                        return d.source.y;
+                    })
+                    .attr("x2", function (d) {
+                        return d.target.x;
+                    })
+                    .attr("y2", function (d) {
+                        return d.target.y;
+                    })
+        }
+
+        ///////////////////////////////////
+        // WKS End
+        ///////////////////////////////////
+
+        function startForce(data) {
+            simulation
+                    .nodes(data.cities)
+                    .on("tick", ticked);
+
+            simulation.force("link")
+                    .links(data.links);
+
+            simulation.alpha(1).restart();
+        }
+
+        function removeSuffix(name) {
+            return name.substr(0, name.length - SUFFIX.length);
+        }
+
+        function findNode(relPath, _nodes) {
+            _nodes.find(function (node) {
+                return node.name == relPath;
+            })
+        }
+
+        function findLink(fromRelPath, toRelPath, _links) {
+            _links.find(function (link) {
+                return (link.source == fromRelPath && link.target == toRelPath) || (link.target == fromRelPath && link.source == toRelPath);
+            });
+        }
+
+        function addNode(relPath, _nodes) {
+            if(_.isEmpty(findNode(relPath, _nodes))) {
+                var pathParts = relPath.split("/");
+                var indexOfLastPart = pathParts.length-1;
+                var filename = pathParts[indexOfLastPart];
+                _nodes.push({
+                    kennzeichen: filename,
+                    name: relPath,
+                    bundesland: (pathParts[0] == filename ? "." : pathParts[0])
+                })
+            }
+        }
+
+        function addLink(fromRelPath, toRelPath, value, _links) {
+            if(_.isEmpty(findLink(fromRelPath, toRelPath, _links))) {
+                _links.push({
+                    source: fromRelPath,
+                    target: toRelPath,
+                    count: value*100
+                });
+            }
+        }
+
+        function _getCoronaRecursive(index, fromRelPath, currentDepth, _nodes, _links, _processed) {
+            _processed.push(fromRelPath);
+
+            addNode(fromRelPath, _nodes);
+
+            if(currentDepth > 0) {
+                var entry = index[fromRelPath];
+                if(entry != null) {
+                    _.forOwn(entry, function (value, toRelPath) {
+                        var toRelPathWithoutSuffix = removeSuffix(toRelPath);
+                        addLink(fromRelPath, toRelPathWithoutSuffix, value, _links);
+                        if(_processed.indexOf(toRelPathWithoutSuffix) < 0) {
+                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth-1, _nodes, _links, _processed);
+                        }
+                    })
+                }
+            }
+        }
+
+        function getCorona(index, relPath, maxDepth) {
+            if(_.isEmpty(index)) {
+                readIndex();
+            }
+
+            var _links = [];
+            var _nodes = [];
+
+            _getCoronaRecursive(index, relPath, maxDepth, _nodes, _links, []);
+            return {
+                cities: _nodes,
+                links: _links
+            }
+        }
+
+        var depth = document.getElementById("quantile-slider").value;
+
+        d3.json('data/index.json', function (error, data) {
+            var corona = getCorona(data, path, depth);
+            drawNodes(corona.cities);
+            drawTexts(corona.cities);
+            drawLinks(corona.links);
+            startForce(corona);
+        });
+    }
+
+    drawForce(path);
+
+</script>
+</body>
+</html>

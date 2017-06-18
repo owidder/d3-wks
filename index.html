@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>TF/IDF</title>
+
+    <link rel="stylesheet" type="text/css" href="bower_components/materialize/dist/css/materialize.css"
+          media="screen,projection"/>
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="css/material-icons.css"/>
+
+    <script src="bower_components/bottlejs/dist/bottle.js"></script>
+    <script>var bottle = new Bottle();</script>
+
+    <script src="bower_components/d3/d3.js"></script>
+    <script src="bower_components/lodash/dist/lodash.js"></script>
+    <script src="bower_components/jquery/dist/jquery.js"></script>
+    <script src="bower_components/handlebars/handlebars.js"></script>
+
+    <style>
+        .left {
+            text-align: left;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<script id="subfolders-script" type="text/x-handlebars-template">
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <h5><code>{{@root.currentFolder}}</code></h5>
+            </div>
+        </div>
+        {{#each filenames}}
+        <div class="row">
+            <div class="col s10">
+                <h5><a href="{{nextPage}}?path={{@root.currentFolder}}{{filename}}" target="{{target}}">{{filename}}</a></h5>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</script>
+
+<script src="js/util/simplePromise.js"></script>
+<script src="js/util/util.js"></script>
+
+<div id="files"></div>
+
+<script>
+
+    /* gobal $ */
+    /* global bottle */
+
+    var currentPath = bottle.container.util.param("path", "erpnext");
+    if(!currentPath.endsWith("/")) {
+        currentPath += "/";
+    }
+
+    var SUMMARY_NAME = '_SUMMARY_';
+
+    function showFiles(filenames) {
+        $("#files").empty();
+        var filesTemplateScript = $("#subfolders-script").html();
+        var filesTemplate = Handlebars.compile(filesTemplateScript);
+        var filenamesWithMetadata = filenames.map(function(filename) {
+            var isFolder = filename.endsWith("/");
+            var nextPage = isFolder ? "index.html" : "force.html";
+            var target = isFolder ? "_self" : "_blank";
+            return {
+                filename: filename,
+                nextPage: nextPage,
+                target: target,
+                isFile: !isFolder,
+                isNotSummary: filename != SUMMARY_NAME
+            }
+        });
+        var ctx = {
+            currentFolder: currentPath,
+            filenames: filenamesWithMetadata
+        };
+        var filesHtml = filesTemplate(ctx);
+        $("#files").append(filesHtml);
+
+    }
+
+    function getFiles() {
+        d3.text("data/erpnext.txt", function (error, data) {
+            var filenames = [];
+            var lines = data.split("\n");
+            lines.forEach(function (line) {
+                if(!_.isEmpty(line)) {
+                    var parts = line.split(": ");
+                    var type = parts[0];
+                    var path = parts[1].substr('erpnext/'.length);
+                    if(path.startsWith(currentPath)) {
+                        var relPath = path.substr(currentPath.length);
+                        if(relPath.indexOf("/") < 0) {
+                            if(!relPath.endsWith('.utf8') && !relPath.endsWith('.utf8.csv') && relPath != '_.csv') {
+                                var filename = type == 'f' ? relPath : relPath + '/';
+                                filenames.push(filename);
+                            }
+                        }
+                    }
+                }
+            });
+            showFiles(filenames);
+        });
+    }
+
+    getFiles();
+
+</script>
+</body>
+</html>
