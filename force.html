@@ -116,7 +116,7 @@
                 .append("text")
                 .attr("class", "node")
                 .text(function (d) {
-                    return d.kennzeichen;
+                    return d.shortname;
                 });
 
             selectionWithData.exit().remove();
@@ -142,7 +142,7 @@
                     return color(d.folder);
                 })
                 .attr("_legend", function (d) {
-                    return d.name;
+                    return d.name + " (" + d.depth + ")";
                 })
                 .call(stuff.drag);
 
@@ -217,11 +217,12 @@
                 var pathParts = relPath.split("/");
                 var indexOfLastPart = pathParts.length - 1;
                 var filename = pathParts[indexOfLastPart];
+                var folder = pathParts.length > 1 ? pathParts[1] : pathParts[0];
                 _nodes.push({
-                    kennzeichen: filename,
+                    shortname: filename,
                     depth: depth,
                     name: relPath,
-                    folder: (pathParts[0] == filename ? "." : pathParts[0])
+                    folder: (folder == filename ? "." : folder)
                 })
             }
         }
