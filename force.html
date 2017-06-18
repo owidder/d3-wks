@@ -19,6 +19,12 @@
             font-size: .4em;
         }
 
+        circle.root {
+            stroke-width: 3px;
+            stroke: black;
+            opacity: 0.7;
+        }
+
     </style>
 </head>
 <body>
@@ -124,7 +130,13 @@
 
             selectionWithData.enter()
                 .append("circle")
-                .attr("class", "node forlegend")
+                .attr("class", function (d) {
+                    var classes = "node forlegend";
+                    if(d.depth == 0) {
+                        return classes + " root";
+                    }
+                    return classes;
+                })
                 .attr("r", 10)
                 .attr("fill", function (d) {
                     return color(d.folder);
@@ -200,13 +212,14 @@
             });
         }
 
-        function addNode(relPath, _nodes) {
+        function addNode(relPath, depth, _nodes) {
             if (_.isEmpty(findNode(relPath, _nodes))) {
                 var pathParts = relPath.split("/");
                 var indexOfLastPart = pathParts.length - 1;
                 var filename = pathParts[indexOfLastPart];
                 _nodes.push({
                     kennzeichen: filename,
+                    depth: depth,
                     name: relPath,
                     folder: (pathParts[0] == filename ? "." : pathParts[0])
                 })
@@ -223,19 +236,19 @@
             }
         }
 
-        function _getCoronaRecursive(index, fromRelPath, currentDepth, _nodes, _links, _processed) {
+        function _getCoronaRecursive(index, fromRelPath, currentDepth, maxDepth, _nodes, _links, _processed) {
             _processed.push(fromRelPath);
 
-            addNode(fromRelPath, _nodes);
+            addNode(fromRelPath, currentDepth, _nodes);
 
-            if (currentDepth > 0) {
+            if (currentDepth < maxDepth) {
                 var entry = index[fromRelPath];
                 if (entry != null) {
                     _.forOwn(entry, function (value, toRelPath) {
                         var toRelPathWithoutSuffix = removeSuffix(toRelPath);
                         addLink(fromRelPath, toRelPathWithoutSuffix, value, _links);
                         if (_processed.indexOf(toRelPathWithoutSuffix) < 0) {
-                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth - 1, _nodes, _links, _processed);
+                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth + 1, maxDepth, _nodes, _links, _processed);
                         }
                     })
                 }
@@ -250,7 +263,7 @@
             var _links = [];
             var _nodes = [];
 
-            _getCoronaRecursive(index, relPath, maxDepth, _nodes, _links, []);
+            _getCoronaRecursive(index, relPath, 0, maxDepth, _nodes, _links, []);
             return {
                 nodes: _nodes,
                 links: _links
