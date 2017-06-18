@@ -9,14 +9,14 @@
             stroke-opacity: 0.6;
         }
 
-        circle.city {
+        circle.node {
             stroke: #fff;
             stroke-width: 1.5px;
             opacity: 0.2;
         }
 
-        text.city {
-            font-size: .7em;
+        text.node {
+            font-size: .4em;
         }
 
     </style>
@@ -101,14 +101,14 @@
         }
 
         function drawTexts(nodes) {
-            var selectionWithData = gTexts.selectAll("text.city")
+            var selectionWithData = gTexts.selectAll("text.node")
                 .data(nodes, function (d) {
                     return d.name;
                 });
 
             selectionWithData.enter()
                 .append("text")
-                .attr("class", "city")
+                .attr("class", "node")
                 .text(function (d) {
                     return d.kennzeichen;
                 });
@@ -117,14 +117,14 @@
         }
 
         function drawNodes(nodes) {
-            var selectionWithData = gNodes.selectAll("circle.city")
+            var selectionWithData = gNodes.selectAll("circle.node")
                 .data(nodes, function (d) {
                     return d.name;
                 });
 
             selectionWithData.enter()
                 .append("circle")
-                .attr("class", "city forlegend")
+                .attr("class", "node forlegend")
                 .attr("r", 10)
                 .attr("fill", function (d) {
                     return color(d.bundesland);
@@ -138,7 +138,7 @@
         }
 
         function ticked() {
-            gNodes.selectAll("circle.city")
+            gNodes.selectAll("circle.node")
                 .attr("cx", function (d) {
                     return d.x;
                 })
@@ -146,7 +146,7 @@
                     return d.y;
                 });
 
-            gTexts.selectAll("text.city")
+            gTexts.selectAll("text.node")
                 .attr("x", function (d) {
                     return d.x;
                 })

@@ -134,11 +134,11 @@ bottle.factory("Legend", function (container) {
 
             legendData.enter()
                 .append("tspan")
-                .attr("font-size", "1.2em")
+                .attr("font-size", "0.5em")
                 .attr("class", "textline")
-                .attr("x", "0.3em")
+                .attr("x", "0.6em")
                 .attr("y", function (d, i) {
-                    return (i + 1) * 10;
+                    return (i + 1) * 15;
                 });
 
             legendText.selectAll(".textline")
