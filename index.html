@@ -37,7 +37,12 @@
         {{#each filenames}}
         <div class="row">
             <div class="col s10">
-                <h5><a href="{{nextPage}}?path={{@root.currentFolder}}{{filename}}" target="{{target}}">{{filename}}</a></h5>
+                {{#if isFile}}
+                <h5><a href="{{fileLink}}" target="{{target}}">{{filename}}</a></h5>
+                {{/if}}
+                {{#if isFolder}}
+                <h5><a href="{{folderLink}}" target="{{target}}">{{filename}}</a></h5>
+                {{/if}}
             </div>
         </div>
         {{/each}}
@@ -69,8 +74,11 @@
             var target = isFolder ? "_self" : "_blank";
             return {
                 filename: filename,
+                folderLink: "index.html?path=" + currentPath + filename,
+                fileLink: "force.html?path=" + currentPath.substr("erpnext/".length) + filename,
                 nextPage: nextPage,
                 target: target,
+                isFolder: isFolder,
                 isFile: !isFolder
             }
         });
@@ -91,7 +99,7 @@
                 if(!_.isEmpty(line)) {
                     var parts = line.split(": ");
                     var type = parts[0];
-                    var path = parts[1].substr('erpnext/'.length);
+                    var path = parts[1];
                     if(path.startsWith(currentPath)) {
                         var relPath = path.substr(currentPath.length);
                         if(relPath.indexOf("/") < 0) {
