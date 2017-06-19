@@ -24,20 +24,6 @@ bottle.factory("wks", function (container) {
     }
 
     function drawTexts(nodes) {
-        var gTexts = d3.select("g.texts");
-        var selectionWithData = gTexts.selectAll("text.node")
-            .data(nodes, function (d) {
-                return d.name;
-            });
-
-        selectionWithData.enter()
-            .append("text")
-            .attr("class", "node")
-            .text(function (d) {
-                return d.shortname;
-            });
-
-        selectionWithData.exit().remove();
     }
 
     function drawNodes(nodes) {
@@ -97,14 +83,6 @@ bottle.factory("wks", function (container) {
     }
 
     function updateTexts() {
-        var gTexts = d3.select("g.texts");
-        gTexts.selectAll("text.node")
-            .attr("x", function (d) {
-                return d.x;
-            })
-            .attr("y", function (d) {
-                return d.y;
-            });
     }
 
     function ticked(data) {
