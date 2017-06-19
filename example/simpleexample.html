@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+    rect.bar {
+        opacity: .5;
+    }
+
+</style>
+<body>
+<div class="panel">
+    <button type="button" onclick="step1()">Draw</button>
+</div>
+<script src="../bower_components/d3/d3.min.js"></script>
+<script>
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
+
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+    var BAR_WIDTH = 20;
+    var BAR_GAP = 5;
+
+    function drawBars(data) {
+
+        /////////////////////////////////
+        // SELECT + ENTER
+        /////////////////////////////////
+
+        svg.selectAll("rect.bar").data(data).enter()
+            .append("rect")
+            .attr("class", "bar")
+            .attr("width", BAR_WIDTH)
+            .style("fill", function (d) {
+                return d.key;
+            })
+            .attr("x", function (d, index) {
+                return index * (BAR_WIDTH + BAR_GAP);
+            })
+            .attr("height", function (d) {
+                return d.value;
+            })
+            .attr("y", function (d) {
+                return 500 - d.value;
+            });
+    }
+
+    var barData = [
+        {
+            key: "red",
+            value: 100
+        },
+        {
+            key: "green",
+            value: 200
+        },
+        {
+            key: "blue",
+            value: 250
+        }
+    ];
+
+    function step1() {
+        drawBars(barData);
+    }
+
+</script>
+</body>
+</html>
