@@ -12,6 +12,7 @@
     <button type="button" onclick="stepDraw()">Draw</button>
     <button type="button" onclick="stepChangeValues()">Change values</button>
     <button type="button" onclick="stepAddToEnd()">Add dataset to end</button>
+    <button type="button" onclick="stepReverse()">Reverse</button>
     <button type="button" onclick="stepRemove()">Remove dataset</button>
     <button type="button" onclick="addBetween()">Add dataset between</button>
     <button type="button" onclick="randomForever()">Random forever</button>
@@ -75,7 +76,7 @@
         // UPDATE
         /////////////////////////////////
 
-        svg.selectAll("rect.bar")
+        selectionWithData
                 .transition()
                 .duration(1000)
                 .attr("x", function(d, index) {
@@ -131,6 +132,11 @@
 
     function stepRemove() {
         barData.splice(1, 1);
+        drawBars(barData);
+    }
+
+    function stepReverse() {
+        barData.reverse();
         drawBars(barData);
     }
 
