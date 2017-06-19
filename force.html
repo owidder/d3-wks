@@ -48,7 +48,6 @@
 <link rel="stylesheet" type="text/css" href="css/style.css">
 <script>
 
-    var SUFFIX = ".utf8";
     var util = bottle.container.util;
     var Legend = bottle.container.Legend;
     var wks = bottle.container.wks;
@@ -74,16 +73,9 @@
         })
         .on("mouseout", legend.hideLegend);
 
-    var gLinks = svg.append("g")
-        .attr("class", "links");
-
-    var gTexts = svg.append("g")
-        .attr("class", "texts");
-
-    var gNodes = svg.append("g")
-        .attr("class", "nodes");
-
-    var color = d3.scaleOrdinal(d3.schemeCategory20);
+    svg.append("g").attr("class", "links");
+    svg.append("g").attr("class", "texts");
+    svg.append("g").attr("class", "nodes");
 
     var simulation = d3.forceSimulation()
         .force("link", d3.forceLink().id(function (d) {
@@ -106,92 +98,7 @@
             simulation.alpha(1).restart();
         }
 
-        function removeSuffix(name) {
-            return name.substr(0, name.length - SUFFIX.length);
-        }
-
-        function findNode(relPath, _nodes) {
-            _nodes.find(function (node) {
-                return node.name == relPath;
-            })
-        }
-
-        function findLink(fromRelPath, toRelPath, _links) {
-            _links.find(function (link) {
-                return (link.source == fromRelPath && link.target == toRelPath) || (link.target == fromRelPath && link.source == toRelPath);
-            });
-        }
-
-        function addNode(relPath, depth, _nodes) {
-            if (_.isEmpty(findNode(relPath, _nodes))) {
-                var pathParts = relPath.split("/");
-                var indexOfLastPart = pathParts.length - 1;
-                var filename = pathParts[indexOfLastPart];
-                var folder = pathParts.length > 1 ? pathParts[1] : pathParts[0];
-                _nodes.push({
-                    shortname: filename,
-                    depth: depth,
-                    name: relPath,
-                    folder: (folder == filename ? "." : folder)
-                })
-            }
-        }
-
-        function addLink(fromRelPath, toRelPath, value, _links) {
-            if (_.isEmpty(findLink(fromRelPath, toRelPath, _links))) {
-                _links.push({
-                    source: fromRelPath,
-                    target: toRelPath,
-                    count: value * 100
-                });
-            }
-        }
-
-        function _getCoronaRecursive(index, fromRelPath, currentDepth, maxDepth, _nodes, _links, _processed) {
-            _processed.push(fromRelPath);
-
-            addNode(fromRelPath, currentDepth, _nodes);
-
-            if (currentDepth < maxDepth) {
-                var entry = index[fromRelPath];
-                if (entry != null) {
-                    _.forOwn(entry, function (value, toRelPath) {
-                        var toRelPathWithoutSuffix = removeSuffix(toRelPath);
-                        addLink(fromRelPath, toRelPathWithoutSuffix, value, _links);
-                        if (_processed.indexOf(toRelPathWithoutSuffix) < 0) {
-                            _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth + 1, maxDepth, _nodes, _links, _processed);
-                        }
-                    })
-                }
-            }
-        }
-
-        function getCorona(index, relPath, maxDepth) {
-            if (_.isEmpty(index)) {
-                readIndex();
-            }
-
-            var _links = [];
-            var _nodes = [];
-
-            _getCoronaRecursive(index, relPath, 0, maxDepth, _nodes, _links, []);
-            return {
-                nodes: _nodes,
-                links: _links
-            }
-        }
-
         var depth = document.getElementById("quantile-slider").value;
-
-/*
-        d3.json('data/index.json', function (error, data) {
-            var corona = getCorona(data, path, depth);
-            wks.drawNodes(corona.nodes);
-            wks.drawTexts(corona.nodes);
-            wks.drawLinks(corona.links);
-            startForce(corona);
-        });
-*/
 
         corona.readCorona(path, depth).then(function (corona) {
             wks.drawNodes(corona.nodes);
@@ -202,7 +109,7 @@
     }
 
     legend.appendLegend();
-    drawForce(path);
+    drawForce();
 
 </script>
 </body>
