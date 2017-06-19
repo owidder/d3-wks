@@ -38,6 +38,7 @@
 <script src="js/util/simplePromise.js"></script>
 <script src="js/util/util.js"></script>
 <script src="js/legend.js"></script>
+<script src="js/wks.js"></script>
 
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="js/util/stuff.js"></script>
@@ -49,6 +50,7 @@
     var SUFFIX = ".utf8";
     var util = bottle.container.util;
     var Legend = bottle.container.Legend;
+    var wks = bottle.container.wks;
 
     var path = util.param("path", "");
 
@@ -70,9 +72,14 @@
         })
         .on("mouseout", legend.hideLegend);
 
-    var gLinks = svg.append("g");
-    var gTexts = svg.append("g");
-    var gNodes = svg.append("g");
+    var gLinks = svg.append("g")
+        .attr("class", "links");
+
+    var gTexts = svg.append("g")
+        .attr("class", "texts");
+
+    var gNodes = svg.append("g")
+        .attr("class", "nodes");
 
     var color = d3.scaleOrdinal(d3.schemeCategory20);
 
@@ -188,7 +195,7 @@
         function startForce(data) {
             simulation
                 .nodes(data.nodes)
-                .on("tick", ticked);
+                .on("tick", wks.ticked);
 
             simulation.force("link")
                 .links(data.links);
@@ -275,9 +282,9 @@
 
         d3.json('data/index.json', function (error, data) {
             var corona = getCorona(data, path, depth);
-            drawNodes(corona.nodes);
-            drawTexts(corona.nodes);
-            drawLinks(corona.links);
+            wks.drawNodes(corona.nodes);
+            wks.drawTexts(corona.nodes);
+            wks.drawLinks(corona.links);
             startForce(corona);
         });
     }
