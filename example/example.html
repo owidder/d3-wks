@@ -24,8 +24,8 @@
     var height = window.innerHeight;
 
     var svg = d3.select("body").append("svg")
-            .attr("width", width)
-            .attr("height", height);
+        .attr("width", width)
+        .attr("height", height);
 
     var BAR_WIDTH = 20;
     var BAR_GAP = 5;
@@ -35,12 +35,12 @@
 
         function setHeightOfBarByData(selection) {
             selection
-                    .attr("height", function (d) {
-                        return d.value;
-                    })
-                    .attr("y", function (d) {
-                        return 500 - d.value;
-                    });
+                .attr("height", function (d) {
+                    return d.value;
+                })
+                .attr("y", function (d) {
+                    return 500 - d.value;
+                });
         }
 
         /////////////////////////////////
@@ -48,52 +48,54 @@
         /////////////////////////////////
 
         var selectionWithData = svg.selectAll("rect.bar")
-                .data(data, function (d) {
-                    return d.key;
-                });
+            .data(data, function (d) {
+                return d.key;
+            });
 
         /////////////////////////////////
         // ENTER
         /////////////////////////////////
 
         selectionWithData.enter()
-                .append("rect")
-                .attr("class", "bar")
-                .attr("width", BAR_WIDTH)
-                .style("fill", function(d) {
-                    return d.key;
-                })
-                .attr("x", function(d, index) {
-                    return index * (BAR_WIDTH + BAR_GAP);
-                })
-                .attr("height", START_HEIGHT)
-                .attr("y", 500 - START_HEIGHT)
-                .transition()
-                .duration(1000)
-                .call(setHeightOfBarByData);
+            .append("rect")
+            .attr("class", "bar")
+            .attr("width", BAR_WIDTH)
+            .style("fill", function (d) {
+                return d.key;
+            })
+            .attr("x", function (d) {
+                return barData.indexOf(d) * (BAR_WIDTH + BAR_GAP);
+            })
+            .attr("height", START_HEIGHT)
+            .attr("y", 500 - START_HEIGHT);
 
         /////////////////////////////////
         // UPDATE
         /////////////////////////////////
 
-        selectionWithData
-                .transition()
-                .duration(1000)
-                .attr("x", function(d, index) {
-                    return index * (BAR_WIDTH + BAR_GAP);
-                })
-                .call(setHeightOfBarByData);
+        d3.selectAll("rect.bar")
+            .transition()
+            .duration(1000)
+            .attr("x", function (d) {
+                return barData.indexOf(d) * (BAR_WIDTH + BAR_GAP);
+            })
+            .attr("height", function (d) {
+                return d.value;
+            })
+            .attr("y", function (d) {
+                return 500 - d.value;
+            });
 
         /////////////////////////////////
         // EXIT
         /////////////////////////////////
 
         selectionWithData.exit()
-                .transition()
-                .duration(1000)
-                .attr("height", 0)
-                .attr("y", 500)
-                .remove();
+            .transition()
+            .duration(1000)
+            .attr("height", 0)
+            .attr("y", 500)
+            .remove();
     }
 
     var barData = [
@@ -150,7 +152,7 @@
 
     function randomForever(t) {
         setTimeout(function () {
-            barData.map(function(d) {
+            barData.map(function (d) {
                 d.value = Math.random() * 500;
             }, t);
             drawBars(barData);
