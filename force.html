@@ -39,6 +39,7 @@
 <script src="js/util/util.js"></script>
 <script src="js/legend.js"></script>
 <script src="js/wks.js"></script>
+<script src="js/corona.js"></script>
 
 <script src="bower_components/d3/d3.min.js"></script>
 <script src="js/util/stuff.js"></script>
@@ -51,6 +52,7 @@
     var util = bottle.container.util;
     var Legend = bottle.container.Legend;
     var wks = bottle.container.wks;
+    var corona = bottle.container.corona;
 
     var path = util.param("path", "");
 
@@ -181,8 +183,17 @@
 
         var depth = document.getElementById("quantile-slider").value;
 
+/*
         d3.json('data/index.json', function (error, data) {
             var corona = getCorona(data, path, depth);
+            wks.drawNodes(corona.nodes);
+            wks.drawTexts(corona.nodes);
+            wks.drawLinks(corona.links);
+            startForce(corona);
+        });
+*/
+
+        corona.readCorona(path, depth).then(function (corona) {
             wks.drawNodes(corona.nodes);
             wks.drawTexts(corona.nodes);
             wks.drawLinks(corona.links);
