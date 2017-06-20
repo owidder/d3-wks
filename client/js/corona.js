@@ -13,19 +13,29 @@ bottle.factory("corona", function (container) {
     }
 
     function findNode(relPath, _nodes) {
-        _nodes.find(function (node) {
+        return _nodes.find(function (node) {
             return node.name == relPath;
         })
     }
 
     function findLink(fromRelPath, toRelPath, _links) {
-        _links.find(function (link) {
+        return _links.find(function (link) {
             return (link.source == fromRelPath && link.target == toRelPath) || (link.target == fromRelPath && link.source == toRelPath);
         });
     }
 
+    function updateDepth(relPath, depth, _nodes) {
+        var existingNode = findNode(relPath, _nodes);
+        if(existingNode != null) {
+            if(existingNode.depth > depth) {
+                existingNode.depth = depth;
+            }
+        }
+    }
+
     function addNode(relPath, depth, _nodes) {
-        if (_.isEmpty(findNode(relPath, _nodes))) {
+        var existingNode = findNode(relPath, _nodes);
+        if (existingNode == null) {
             var pathParts = relPath.split("/");
             var indexOfLastPart = pathParts.length - 1;
             var filename = pathParts[indexOfLastPart];
@@ -60,10 +70,11 @@ bottle.factory("corona", function (container) {
                 _.forOwn(entry, function (value, toRelPath) {
                     var toRelPathWithoutSuffix = removeSuffix(toRelPath);
                     addLink(fromRelPath, toRelPathWithoutSuffix, value, _links);
+                    updateDepth(toRelPathWithoutSuffix, currentDepth+1, _nodes);
                     if (_processed.indexOf(toRelPathWithoutSuffix) < 0) {
                         _getCoronaRecursive(index, toRelPathWithoutSuffix, currentDepth + 1, maxDepth, _nodes, _links, _processed);
                     }
-                })
+                });
             }
         }
     }

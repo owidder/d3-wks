@@ -1,0 +1,28 @@
+{
+  "name": "d3-wks",
+  "version": "1.0.0",
+  "description": "* Example data are the similarities (via LSI - https://en.wikipedia.org/wiki/Latent_semantic_analysis#Latent_semantic_indexing) between all files   of the ERPNext (https://erpnext.com/) code base (https://github.com/frappe/erpnext)",
+  "main": "server.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/owidder/d3-wks.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/owidder/d3-wks/issues"
+  },
+  "homepage": "https://github.com/owidder/d3-wks#readme",
+  "dependencies": {
+    "body-parser": "^1.17.2",
+    "express": "^4.15.3",
+    "http": "0.0.0"
+  }
+}
