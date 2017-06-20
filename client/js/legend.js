@@ -5,6 +5,7 @@
 
 
 bottle.factory("Legend", function (container) {
+    var util = container.util;
 
     function Legend(svgSelector) {
 
