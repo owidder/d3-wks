@@ -8,14 +8,14 @@ bottle.factory("wks", function (container) {
 
     function drawLinks(links) {
         var gLinks = d3.select("g.links");
-        var selectionWithData = gLinks.selectAll("line.travel")
+        var selectionWithData = gLinks.selectAll("line.link")
             .data(links, function (d) {
                 return d.source + "#" + d.target;
             });
 
         selectionWithData.enter()
             .append("line")
-            .attr("class", "travel")
+            .attr("class", "link")
             .style("stroke-width", function (d) {
                 return Math.sqrt(d.count / 50)
             });
@@ -56,7 +56,7 @@ bottle.factory("wks", function (container) {
 
     function updateLinks() {
         var gLinks = d3.select("g.links");
-        gLinks.selectAll("line.travel")
+        gLinks.selectAll("line.link")
             .attr("x1", function (d) {
                 return d.source.x;
             })
