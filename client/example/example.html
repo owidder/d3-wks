@@ -33,16 +33,6 @@
 
     function drawBars(data) {
 
-        function setHeightOfBarByData(selection) {
-            selection
-                .attr("height", function (d) {
-                    return d.value;
-                })
-                .attr("y", function (d) {
-                    return 500 - d.value;
-                });
-        }
-
         /////////////////////////////////
         // SELECT
         /////////////////////////////////
